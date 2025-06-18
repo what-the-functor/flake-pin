@@ -28,6 +28,7 @@
         { pkgs }:
         {
           default = pkgs.mkShell {
+            buildInputs = [ pkgs.zlib ];
             packages = [
               pkgs.cabal-install
               pkgs.haskell.compiler.${ghc}

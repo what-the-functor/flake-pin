@@ -1,0 +1,16 @@
+packages: .
+
+index-state: 2025-06-18T00:00:00Z
+
+optimization: 2
+
+program-options
+  ghc-options: -haddock
+
+-- Documentation
+documentation: True
+doc-index-file: $datadir/doc/index.html
+
+-- Test settings
+tests: True
+test-show-details: direct

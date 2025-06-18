@@ -1,0 +1,44 @@
+cabal-version: 3.0
+name: flake-pin
+version: 0.1.0.0
+synopsis: Tool for pinning Nix flake inputs to latest GitHub commits
+description: 
+    A command-line tool that automatically updates Nix flake inputs to their 
+    latest commits from GitHub. Parses flake.lock, fetches latest commit info 
+    from GitHub API, and updates flake.nix with pinned URLs and date comments.
+license: MIT
+author: Tony Merlin
+maintainer: code@what-the-functor.com
+category: Development
+build-type: Simple
+extra-source-files: README.md
+
+common defaults
+    ghc-options: -Wall
+                 -Wcompat
+                 -Widentities
+                 -Wincomplete-record-updates
+                 -Wincomplete-uni-patterns
+                 -Wmissing-export-lists
+                 -Wmissing-home-modules
+                 -Wpartial-fields
+                 -Wredundant-constraints
+    default-language: GHC2021
+
+
+executable flake-pin
+    import: defaults
+    main-is: Main.hs
+    build-depends: base ^>=4.19.0.0
+                 , optparse-applicative ^>=0.18
+    hs-source-dirs: app
+
+test-suite flake-pin-test
+    import: defaults
+    default-language: GHC2021
+    type: exitcode-stdio-1.0
+    hs-source-dirs: test
+    main-is: Spec.hs
+    build-depends: base ^>=4.19.0.0
+                 , hspec ^>=2.11
+                 , hedgehog ^>=1.4
