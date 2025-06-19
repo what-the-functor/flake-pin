@@ -33,12 +33,24 @@ executable flake-pin
                  , optparse-applicative ^>=0.18
     hs-source-dirs: app
 
+library
+    import: defaults
+    exposed-modules: FlakePin.Types
+    hs-source-dirs: src
+    build-depends: base ^>=4.19.0.0
+                 , text ^>=2.1
+
 test-suite flake-pin-test
     import: defaults
     default-language: GHC2021
     type: exitcode-stdio-1.0
     hs-source-dirs: test
     main-is: Spec.hs
+    other-modules: FlakePin.FlakeInputNameSpec
     build-depends: base ^>=4.19.0.0
-                 , hspec ^>=2.11
-                 , hedgehog ^>=1.4
+                 , flake-pin
+                 , hedgehog ^>=1.5
+                 , hspec-core ^>=2.11
+                 , hspec-hedgehog ^>= 0.3.0
+                 , text ^>=2.1
+

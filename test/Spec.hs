@@ -1,9 +1,7 @@
-module Main (main) where
-
-import Test.Hspec
+import FlakePin.FlakeInputNameSpec qualified
+import Test.Hspec.Core.Runner (hspec)
+import Test.Hspec.Core.Spec (describe)
 
 main :: IO ()
 main = hspec $ do
-  describe "flake-pin" $ do
-    it "is not yet implemented" $ do
-      True `shouldBe` True
+    describe "FlakePin.FlakeInputNameSpec" FlakePin.FlakeInputNameSpec.spec
