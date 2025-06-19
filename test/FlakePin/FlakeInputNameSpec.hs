@@ -14,6 +14,7 @@ import FlakePin.Types
 spec :: Spec
 spec = describe "FlakeInputName" $ do
     it "accepts valid input names" $ hedgehog acceptValidName
+    it "rejects empty input names" $ hedgehog rejectEmpty
 
 acceptValidName :: PropertyT IO ()
 acceptValidName = do
@@ -21,6 +22,13 @@ acceptValidName = do
     case mkFlakeInputName name of
         Right _ -> success
         Left err -> footnoteShow err >> failure
+
+rejectEmpty :: PropertyT IO ()
+rejectEmpty = do
+    name <- forAll (pure Text.empty)
+    case mkFlakeInputName name of
+        Left EmptyInputName -> success
+        Right _ -> failure
 
 genValidName :: Gen Text.Text
 genValidName = do
