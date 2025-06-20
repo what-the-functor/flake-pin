@@ -18,6 +18,7 @@ spec = describe "FlakeInputName" $ do
     it "rejects empty input names" $ hedgehog rejectEmpty
     it "rejects input names starting with a digit" $ hedgehog rejectFirstCharIsDigit
     it "rejects input names longer than 25 characters" $ hedgehog rejectLongerThanMaxLength
+    it "rejects input names that are only whitespace" $ hedgehog rejectOnlyWhitespace
 
 acceptValidName :: PropertyT IO ()
 acceptValidName = do
@@ -50,6 +51,14 @@ rejectLongerThanMaxLength = do
         Left _ -> failure
         Right _ -> failure
 
+rejectOnlyWhitespace :: PropertyT IO ()
+rejectOnlyWhitespace = do
+    name <- forAll genOnlyWhitespace
+    case mkFlakeInputName name of
+        Left EmptyInputName -> success
+        Left _ -> failure
+        Right _ -> failure
+
 genValidName :: Gen Text
 genValidName = genWithFirstChar . Gen.choice $ [Gen.alpha, pure '_']
 
@@ -60,6 +69,10 @@ genValidOfLength :: (MonadGen m) => Int -> m Text
 genValidOfLength n = genName l l (Gen.choice [Gen.alpha, pure '_'])
   where
     l = n - 1
+
+genOnlyWhitespace :: Gen Text
+genOnlyWhitespace =
+    Gen.text (Range.linear 1 25) (Gen.choice [pure ' ', pure '\t', pure '\n', pure '\r', pure '\xa0'])
 
 genWithFirstChar :: (MonadGen g) => g Char -> g Text
 genWithFirstChar = genName 0 24
