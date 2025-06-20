@@ -12,6 +12,9 @@ import Test.Hspec.Hedgehog
 
 import FlakePin.Types
 
+maxLength :: Int
+maxLength = 25
+
 spec :: Spec
 spec = describe "FlakeInputName" $ do
     it "accepts valid input names" $ hedgehog acceptValidName
@@ -19,6 +22,7 @@ spec = describe "FlakeInputName" $ do
     it "rejects input names starting with a digit" $ hedgehog rejectFirstCharIsDigit
     it "rejects input names longer than 25 characters" $ hedgehog rejectLongerThanMaxLength
     it "rejects input names that are only whitespace" $ hedgehog rejectOnlyWhitespace
+    it "rejects input names with internal whitespace" $ hedgehog rejectInternalWhitespace
 
 acceptValidName :: PropertyT IO ()
 acceptValidName = do
@@ -59,6 +63,14 @@ rejectOnlyWhitespace = do
         Left _ -> failure
         Right _ -> failure
 
+rejectInternalWhitespace :: PropertyT IO ()
+rejectInternalWhitespace = do
+    name <- forAll genWithInternalWhitespace
+    case mkFlakeInputName name of
+        Left ContainsWhiteSpace -> success
+        Left _ -> failure
+        Right _ -> failure
+
 genValidName :: Gen Text
 genValidName = genWithFirstChar . Gen.choice $ [Gen.alpha, pure '_']
 
@@ -74,11 +86,23 @@ genOnlyWhitespace :: Gen Text
 genOnlyWhitespace =
     Gen.text (Range.linear 1 25) (Gen.choice [pure ' ', pure '\t', pure '\n', pure '\r', pure '\xa0'])
 
+genWithInternalWhitespace :: Gen Text
+genWithInternalWhitespace = do
+    validName <- genValidOfLength maxLength
+    index <- Gen.int (Range.linear 1 (maxLength - 2))
+    whiteSpace <- genWhiteSpace
+    pure $
+        let (a, b) = Text.splitAt index validName
+         in Text.take maxLength $ Text.concat [a, Text.cons whiteSpace b]
+
 genWithFirstChar :: (MonadGen g) => g Char -> g Text
-genWithFirstChar = genName 0 24
+genWithFirstChar = genName 0 (maxLength - 1)
 
 genName :: (MonadGen m) => Int -> Int -> m Char -> m Text
 genName n1 n2 g = do
     firstChar <- g
     remaining <- Gen.string (Range.linear n1 n2) (Gen.choice [Gen.alphaNum, pure '_', pure '-'])
     pure $ Text.pack (firstChar : remaining)
+
+genWhiteSpace :: Gen Char
+genWhiteSpace = Gen.choice [pure ' ', pure '\t', pure '\n', pure '\r', pure '\xa0']
