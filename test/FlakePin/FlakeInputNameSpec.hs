@@ -17,6 +17,7 @@ spec = describe "FlakeInputName" $ do
     it "accepts valid input names" $ hedgehog acceptValidName
     it "rejects empty input names" $ hedgehog rejectEmpty
     it "rejects input names starting with a digit" $ hedgehog rejectFirstCharIsDigit
+    it "rejects input names longer than 25 characters" $ hedgehog rejectLongerThanMaxLength
 
 acceptValidName :: PropertyT IO ()
 acceptValidName = do
@@ -41,14 +42,30 @@ rejectFirstCharIsDigit = do
         Left _ -> failure
         Right _ -> failure
 
+rejectLongerThanMaxLength :: PropertyT IO ()
+rejectLongerThanMaxLength = do
+    name <- forAll (genValidOfLength 26)
+    case mkFlakeInputName name of
+        Left (LongerThan 25) -> success
+        Left _ -> failure
+        Right _ -> failure
+
 genValidName :: Gen Text
-genValidName = genFirstChar . Gen.choice $ [Gen.alpha, pure '_']
+genValidName = genWithFirstChar . Gen.choice $ [Gen.alpha, pure '_']
 
 genStartsWithDigit :: Gen Text
-genStartsWithDigit = genFirstChar Gen.digit
+genStartsWithDigit = genWithFirstChar Gen.digit
 
-genFirstChar :: (MonadGen g) => g Char -> g Text
-genFirstChar a = do
-    firstChar <- a
-    remaining <- Gen.string (Range.linear 0 24) (Gen.choice [Gen.alphaNum, pure '_', pure '-'])
+genValidOfLength :: (MonadGen m) => Int -> m Text
+genValidOfLength n = genName l l (Gen.choice [Gen.alpha, pure '_'])
+  where
+    l = n - 1
+
+genWithFirstChar :: (MonadGen g) => g Char -> g Text
+genWithFirstChar = genName 0 24
+
+genName :: (MonadGen m) => Int -> Int -> m Char -> m Text
+genName n1 n2 g = do
+    firstChar <- g
+    remaining <- Gen.string (Range.linear n1 n2) (Gen.choice [Gen.alphaNum, pure '_', pure '-'])
     pure $ Text.pack (firstChar : remaining)
