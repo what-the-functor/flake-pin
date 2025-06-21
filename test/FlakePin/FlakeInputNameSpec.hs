@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module FlakePin.FlakeInputNameSpec (spec) where
@@ -11,8 +12,9 @@ import Test.Hspec.Core.Spec (Spec, describe, it)
 import Test.Hspec.Hedgehog
 
 import FlakePin.Types
+import Numeric.Natural (Natural)
 
-maxLength :: Int
+maxLength :: Natural
 maxLength = 25
 
 spec :: Spec
@@ -49,7 +51,7 @@ rejectFirstCharIsDigit = do
 
 rejectLongerThanMaxLength :: PropertyT IO ()
 rejectLongerThanMaxLength = do
-    name <- forAll (genValidOfLength 26)
+    name <- forAll (genValidWithin (maxLength + 1) (maxLength + 1))
     case mkFlakeInputName name of
         Left (LongerThan 25) -> success
         Left _ -> failure
@@ -72,37 +74,41 @@ rejectInternalWhitespace = do
         Right _ -> failure
 
 genValidName :: Gen Text
-genValidName = genWithFirstChar . Gen.choice $ [Gen.alpha, pure '_']
+genValidName = genWithFirstChar genValidHeadChar
 
 genStartsWithDigit :: Gen Text
 genStartsWithDigit = genWithFirstChar Gen.digit
 
-genValidOfLength :: (MonadGen m) => Int -> m Text
-genValidOfLength n = genName l l (Gen.choice [Gen.alpha, pure '_'])
-  where
-    l = n - 1
+genValidWithin :: Natural -> Natural -> Gen Text
+genValidWithin minN maxN = genName minN maxN genValidHeadChar
 
 genOnlyWhitespace :: Gen Text
-genOnlyWhitespace =
-    Gen.text (Range.linear 1 25) (Gen.choice [pure ' ', pure '\t', pure '\n', pure '\r', pure '\xa0'])
+genOnlyWhitespace = Gen.text (Range.linear 1 (fromIntegral maxLength)) genWhiteSpace
 
 genWithInternalWhitespace :: Gen Text
 genWithInternalWhitespace = do
-    validName <- genValidOfLength maxLength
-    index <- Gen.int (Range.linear 1 (maxLength - 2))
+    validName <- genValidWithin 2 (maxLength - 1)
+    index <- Gen.int (Range.linear 1 (Text.length validName - 2))
     whiteSpace <- genWhiteSpace
     pure $
         let (a, b) = Text.splitAt index validName
-         in Text.take maxLength $ Text.concat [a, Text.cons whiteSpace b]
+         in Text.concat [a, Text.cons whiteSpace b]
 
-genWithFirstChar :: (MonadGen g) => g Char -> g Text
-genWithFirstChar = genName 0 (maxLength - 1)
+genWithFirstChar :: Gen Char -> Gen Text
+genWithFirstChar = genName 0 maxLength
 
-genName :: (MonadGen m) => Int -> Int -> m Char -> m Text
-genName n1 n2 g = do
-    firstChar <- g
-    remaining <- Gen.string (Range.linear n1 n2) (Gen.choice [Gen.alphaNum, pure '_', pure '-'])
-    pure $ Text.pack (firstChar : remaining)
+genValidHeadChar :: Gen Char
+genValidHeadChar = Gen.choice [Gen.alpha, pure '_']
+
+genName :: Natural -> Natural -> Gen Char -> Gen Text
+genName n1 n2 g1st = (charToText <$> g1st) <> genTailText n1 (n2 - 1)
 
 genWhiteSpace :: Gen Char
 genWhiteSpace = Gen.choice [pure ' ', pure '\t', pure '\n', pure '\r', pure '\xa0']
+
+genTailText :: (MonadGen m) => Natural -> Natural -> m Text
+genTailText minN maxN =
+    Gen.text (Range.linear (fromIntegral minN) (fromIntegral maxN)) (Gen.choice [Gen.alphaNum, pure '_', pure '-'])
+
+charToText :: Char -> Text
+charToText = Text.pack . (: [])
