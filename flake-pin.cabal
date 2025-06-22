@@ -47,6 +47,7 @@ test-suite flake-pin-test
     hs-source-dirs: test
     main-is: Spec.hs
     other-modules: FlakePin.FlakeInputNameSpec
+                 , FlakePin.FlakeDirPathSpec
     build-depends: base ^>=4.19.0.0
                  , flake-pin
                  , hedgehog ^>=1.5
