@@ -14,9 +14,6 @@ import Test.Hspec.Hedgehog
 import FlakePin.Types
 import Numeric.Natural (Natural)
 
-maxLength :: Natural
-maxLength = 25
-
 spec :: Spec
 spec = describe "FlakeInputName" $ do
     it "accepts valid input names" $ hedgehog acceptValidName
