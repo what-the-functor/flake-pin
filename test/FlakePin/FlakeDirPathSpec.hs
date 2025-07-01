@@ -6,11 +6,13 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import Hedgehog
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import System.OsPath
 import Test.Hspec.Core.Spec (Spec, describe, it)
 import Test.Hspec.Hedgehog
 
 import Data.List.NonEmpty qualified as NonEmpty
 import FlakePin.Types
+import System.OsPath qualified as OsPath
 
 spec :: Spec
 spec = do
@@ -47,14 +49,16 @@ acceptFlakeFile = do
 
 rejectFlakeFile :: PropertyT IO ()
 rejectFlakeFile = do
-    file <- forAll (Gen.filter (/= flakeFileName) genFileName)
+    flakeFile <- forAll genFlakeFileName
+    file <- forAll (Gen.filter (/= flakeFile) genFileName)
     (if isFlakeFile file then failure else success)
 
-genFlakeFileName :: Gen FilePath
-genFlakeFileName = pure flakeFileName
+genFlakeFileName :: Gen OsPath
+genFlakeFileName = Gen.mapMaybe id $ pure flakeFileName
 
-genFileName :: Gen FilePath
-genFileName = Gen.string (Range.linear 0 10) Gen.alphaNum
+genFileName :: Gen OsPath
+genFileName =
+    Gen.mapMaybeT OsPath.encodeUtf $ Gen.string (Range.linear 0 10) Gen.alphaNum
 
 genNonEmpty :: Range Int -> Gen a -> Gen (NonEmpty a)
 genNonEmpty range gen = do
@@ -62,5 +66,5 @@ genNonEmpty range gen = do
     xs <- Gen.list range gen
     pure (x :| xs)
 
-genContents :: Gen (NonEmpty FilePath)
+genContents :: Gen (NonEmpty OsPath)
 genContents = genNonEmpty (Range.linear 0 9) genFileName

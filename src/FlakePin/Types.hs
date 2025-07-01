@@ -17,12 +17,14 @@ import Data.List.NonEmpty qualified as NonEmpty
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Numeric.Natural (Natural)
+import System.OsPath
+import System.OsPath qualified as OsPath
 
 maxLength :: Natural
 maxLength = 25
 
-flakeFileName :: FilePath
-flakeFileName = "flake.nix"
+flakeFileName :: Maybe OsPath
+flakeFileName = OsPath.encodeUtf "flake.nix"
 
 --- Types ---
 
@@ -35,7 +37,7 @@ flakeFileName = "flake.nix"
 newtype FlakeInputName = FlakeInputName Text
 
 -- | A valid flake directory (contains a flake file at the root of the directory).
-newtype FlakeDirPath = FlakeDirPath FilePath
+newtype FlakeDirPath = FlakeDirPath OsPath
 
 data FlakeInputNameError
     = EmptyInputName
@@ -56,7 +58,7 @@ mkFlakeInputName text = case Text.uncons . Text.strip $ text of
     Just (_, cs) | Text.any Char.isSpace cs -> Left ContainsWhiteSpace
     Just _ -> Right (FlakeInputName text)
 
-mkFlakeDirPath :: FilePath -> NonEmpty FilePath -> Either FlakeDirPathError FlakeDirPath
+mkFlakeDirPath :: OsPath -> NonEmpty OsPath -> Either FlakeDirPathError FlakeDirPath
 mkFlakeDirPath path contents =
     case NonEmpty.filter isFlakeFile contents of
         [] -> Left NotFlakeDir
@@ -68,5 +70,5 @@ mkFlakeDirPath path contents =
 This validates filenames relative to a flake directory.
 Only "flake.nix" is considered a valid flake filename.
 -}
-isFlakeFile :: FilePath -> Bool
-isFlakeFile = (==) flakeFileName
+isFlakeFile :: OsPath -> Bool
+isFlakeFile a = all (a ==) flakeFileName

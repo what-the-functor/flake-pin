@@ -24,7 +24,7 @@ common defaults
                  -Wpartial-fields
                  -Wredundant-constraints
     default-language: GHC2021
-
+    build-depends: filepath ^>=1.5
 
 executable flake-pin
     import: defaults
