@@ -32,17 +32,21 @@ executable flake-pin
     main-is: Main.hs
     build-depends: base ^>=4.19.0.0
                  , directory ^>=1.3.9
-                 , extra ^>=1.8
-                 , mtl ^>=2.3
                  , optparse-applicative ^>=0.18
     hs-source-dirs: app
 
 library
     import: defaults
     exposed-modules: FlakePin.Types
+                   , FlakePin.Path.Validation
+                   , FlakePin.Path.Validation.Internal
     hs-source-dirs: src
     build-depends: base ^>=4.19.0.0
+                 , extra ^>=1.8
+                 , mtl ^>=2.3
                  , text ^>=2.1
+                 , directory ^>=1.3.9
+
 
 test-suite flake-pin-test
     import: defaults
@@ -52,9 +56,11 @@ test-suite flake-pin-test
     main-is: Spec.hs
     other-modules: FlakePin.FlakeInputNameSpec
                  , FlakePin.FlakeDirPathSpec
+                 , FlakePin.Path.Validation.InternalSpec
     build-depends: base ^>=4.19.0.0
                  , flake-pin
                  , hedgehog ^>=1.5
                  , hspec-core ^>=2.11
                  , hspec-hedgehog ^>= 0.3.0
+                 , mtl ^>=2.3
 

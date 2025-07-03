@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module FlakePin.FlakeDirPathSpec (spec) where
+module FlakePin.FlakeDirPathSpec (spec, genContents, genFileName) where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Hedgehog
